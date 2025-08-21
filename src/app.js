@@ -9,7 +9,7 @@ app.get("/", (req, res) => {
 
 app.get("/sum", (req, res) => {
   const { a, b } = req.query;
-  const result = Number(a) * Number(b);
+  const result = Number(a) + Number(b);
   res.json({ result });
 });
 
