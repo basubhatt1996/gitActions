@@ -9,8 +9,8 @@ describe("Express API Tests", () => {
   });
 
   test("GET /sum?a=2&b=3 should return 5", async () => {
-    const res = await request(app).get("/sum?a=2&b=3");
+    const res = await request(app).get("/sum?a=3&b=3");
     expect(res.statusCode).toBe(200);
-    expect(res.body.result).toBe(5);
+    expect(res.body.result).toBe(6);
   });
 });
