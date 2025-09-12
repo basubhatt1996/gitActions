@@ -51,13 +51,13 @@ jobs:
       - name: Rsync project to EC2
         run: |
           rsync -avz --delete --exclude='.git' --exclude='node_modules' --exclude='.github' ./ ${{
-            secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/app/
+            secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/opt/app/gitActions
 
       - name: Install dependencies and restart app on EC2
         run: |
           ssh -o StrictHostKeyChecking=yes ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
-            cd /home/${{ secrets.EC2_USER }}/app
+            cd /opt/app/gitActions
             # Install production dependencies
             npm ci --only=production
             # Reload or start via PM2
