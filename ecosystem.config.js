@@ -1,15 +1,13 @@
 module.exports = {
-    apps: [{
-      name: 'my-app',
-      script: 'src\app.js',   
-      instances: 'max',
-      exec_mode: 'cluster',
-      env: {
-        NODE_ENV: 'development'
-      },
-      env_production: {
-        NODE_ENV: 'production',
-        PORT: 8000
-      }
-    }]
-  };
+  apps: [{
+    name: "my-app",
+    script: "src/app.js",   // or "app.js" / "server.js" depending on your entry file
+    cwd: "/opt/app",        // explicitly run from /opt/app
+    instances: 1,
+    autorestart: true,
+    watch: false,
+    env: {
+      NODE_ENV: "production"
+    }
+  }]
+}

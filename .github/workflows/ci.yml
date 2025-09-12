@@ -2,9 +2,9 @@ name: CI-CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   test:
@@ -29,7 +29,7 @@ jobs:
 
   deploy:
     needs: test
-    if: github.ref == 'refs/heads/main'    # only deploy from main branch
+    if: github.ref == 'refs/heads/main' # only deploy from main branch
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (for rsync contents)
@@ -51,17 +51,14 @@ jobs:
       - name: Rsync project to EC2
         run: |
           rsync -avz --delete --exclude='.git' --exclude='node_modules' --exclude='.github' ./ ${{
-            secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/opt/app/gitActions
+            secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/opt/app/
 
       - name: Install dependencies and restart app on EC2
         run: |
-          ssh -o StrictHostKeyChecking=yes ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            set -e
-            cd /opt/app/gitActions
-            # Install production dependencies
-            npm ci --only=production
-            # Reload or start via PM2
-            pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
-            # Save PM2 process list so it restarts on reboot
-            pm2 save
-          EOF
+              ssh -o StrictHostKeyChecking=yes ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+                set -e
+                cd /opt/app
+                npm ci --only=production
+                pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
+                pm2 save
+              EOF
