@@ -29,17 +29,37 @@ jobs:
 
   deploy:
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main'    # only deploy from main branch
     runs-on: ubuntu-latest
     steps:
-      - name: Configure SSH
+      - name: Checkout (for rsync contents)
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Add host to known_hosts
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy.pem
-          chmod 600 ~/.ssh/deploy.pem
-          ssh-keyscan -H $(echo "${{ secrets.EC2_HOST }}" | cut -d@ -f2) >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
-      - name: Deploy & reload with PM2
+      - name: Rsync project to EC2
         run: |
-          ssh -i ~/.ssh/deploy.pem ${{ secrets.EC2_HOST }} \
-            'cd /opt/app && bash ./deploy.sh'
+          rsync -avz --delete --exclude='.git' --exclude='node_modules' --exclude='.github' ./ ${{
+            secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/app/
+
+      - name: Install dependencies and restart app on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=yes ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            cd /home/${{ secrets.EC2_USER }}/app
+            # Install production dependencies
+            npm ci --only=production
+            # Reload or start via PM2
+            pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
+            # Save PM2 process list so it restarts on reboot
+            pm2 save
+          EOF
