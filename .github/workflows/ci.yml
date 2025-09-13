@@ -6,10 +6,12 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted   # 👈 will run directly on EC2
+    runs-on: self-hosted   # Will run directly on EC2
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          path: /opt/app/backend   # 👈 ensures repo is cloned directly here
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -17,12 +19,17 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          cd /opt/app/backend
+          npm ci
 
       - name: Run tests
-        run: npm test
+        run: |
+          cd /opt/app/backend
+          npm test
 
       - name: Deploy with PM2
         run: |
+          cd /opt/app/backend
           pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
           pm2 save
