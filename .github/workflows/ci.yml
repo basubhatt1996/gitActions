@@ -1,25 +1,20 @@
-name: CI-CD
+name: Node.js CI/CD
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [20.x]
+  build-and-deploy:
+    runs-on: self-hosted   # 👈 will run directly on EC2
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
 
       - name: Install dependencies
         run: npm ci
@@ -27,38 +22,7 @@ jobs:
       - name: Run tests
         run: npm test
 
-  deploy:
-    needs: test
-    if: github.ref == 'refs/heads/main' # only deploy from main branch
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout (for rsync contents)
-        uses: actions/checkout@v4
-
-      - name: Configure SSH
+      - name: Deploy with PM2
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Add host to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
-
-      - name: Rsync project to EC2
-        run: |
-          rsync -avz --delete --exclude='.git' --exclude='node_modules' --exclude='.github' ./ ${{
-            secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/opt/app/
-
-      - name: Install dependencies and restart app on EC2
-        run: |
-              ssh -o StrictHostKeyChecking=yes ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-                set -e
-                cd /opt/app
-                npm ci --only=production
-                pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
-                pm2 save
-              EOF
+          pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
+          pm2 save
