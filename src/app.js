@@ -14,7 +14,7 @@ app.get("/sum", (req, res) => {
 });
 
 if (require.main === module) {
-    const PORT = 8080;
+    const PORT = 6000;
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   }
 

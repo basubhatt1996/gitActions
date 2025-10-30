@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted   # Runs directly on EC2
+    runs-on: self-hosted   
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,16 +18,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd /opt/app/actions-runner/_work/gitActions/gitActions
+          cd /home/admin/actions-runner/_work/gitActions/gitActions
           npm ci
 
       - name: Run tests
         run: |
-          cd /opt/app/actions-runner/_work/gitActions/gitActions
+          cd /home/admin/actions-runner/_work/gitActions/gitActions
           npm test
 
       - name: Deploy with PM2
         run: |
-          cd /opt/app/actions-runner/_work/gitActions/gitActions
+          cd /home/admin/actions-runner/_work/gitActions/gitActions
           pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
           pm2 save
