@@ -1,7 +1,7 @@
 module.exports = {
   apps: [{
     name: "my-app", 
-    cwd: "/opt/app/actions-runner/_work/gitActions/gitActions",  
+    cwd: "/home/admin/actions-runner/_work/gitActions/gitActions",  
     script: "src/app.js",      
     instances: 1,
     autorestart: true,
