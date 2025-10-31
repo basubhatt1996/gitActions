@@ -15,7 +15,7 @@ RUN npm ci --only=production
 # Copy source code
 COPY . .
 
-# Create logs directory
+# Create logs directoryy
 RUN mkdir -p logs
 
 # Expose port
