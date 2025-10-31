@@ -4,7 +4,7 @@ const app = express();
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.json({ message: "Hello World Hi!" });
+  res.json({ message: "Hi welcome to mapi" });
 });
 
 app.get("/sum", (req, res) => {
