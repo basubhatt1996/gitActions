@@ -1,4 +1,4 @@
-name: Node.js CI/CD
+name: Node.js Docker CI/CD with PM2
 
 on:
   push:
@@ -6,28 +6,34 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted   
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
+      - name: Build Docker image
         run: |
-          cd /home/admin/actions-runner/_work/gitActions/gitActions
-          npm ci
+          docker build -t node-app-pm2:latest .
 
-      - name: Run tests
+      - name: Stop and remove old container
         run: |
-          cd /home/admin/actions-runner/_work/gitActions/gitActions
-          npm test
+          docker stop node-app-pm2 || true
+          docker rm node-app-pm2 || true
 
-      - name: Deploy with PM2
+      - name: Run new container with PM2
         run: |
-          cd /home/admin/actions-runner/_work/gitActions/gitActions
-          pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
-          pm2 save
+          docker run -d \
+            --name node-app-pm2 \
+            -p 5000:5000 \
+            --restart unless-stopped \
+            node-app-pm2:latest
+
+      - name: Verify deployment
+        run: |
+          sleep 10  # Wait for app to start
+          docker logs node-app-pm2 --tail 20
+          curl -f http://localhost:5000/ || echo "App might still be starting"
+
+      - name: Clean up old images
+        run: |
+          docker image prune -f
